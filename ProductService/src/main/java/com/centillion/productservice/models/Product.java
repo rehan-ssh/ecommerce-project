@@ -1,17 +1,18 @@
 package com.centillion.productservice.models;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-public class Product {
-    private long id;
-    private String name;
+@Entity
+public class Product extends BaseModel {
     private String description;
     private double price;
     private String imageUrl;
+    @ManyToOne
     private Category category;
 }
