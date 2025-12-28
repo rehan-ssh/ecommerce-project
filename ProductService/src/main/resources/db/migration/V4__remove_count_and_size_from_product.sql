@@ -1,0 +1,7 @@
+ALTER TABLE product
+DROP
+COLUMN count;
+
+ALTER TABLE product
+DROP
+COLUMN size;
