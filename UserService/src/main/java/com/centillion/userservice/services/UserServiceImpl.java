@@ -21,6 +21,13 @@ public class UserServiceImpl implements UserService {
     BCryptPasswordEncoder bCryptPasswordEncoder;
     TokenRepository tokenRepository;
 
+    UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, TokenRepository tokenRepository) {
+        this.userRepository = userRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.tokenRepository = tokenRepository;
+
+    }
+
     @Override
     public User signup(String name, String email, String password) {
 

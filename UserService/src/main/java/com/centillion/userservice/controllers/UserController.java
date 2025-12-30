@@ -11,10 +11,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("users/")
 public class UserController {
 
     UserService userService;
+
+    UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/signup")
     public UserDto signup(@RequestBody SignupRequestDto signupRequestDto) {
