@@ -1,5 +1,6 @@
 package com.centillion.productservice.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
@@ -16,7 +17,9 @@ import java.util.List;
 public class Category extends BaseModel {
     private String description;
     @OneToMany(mappedBy = "category")
+    @JsonIgnore // so that when someone searches for products we don't get infinite loop
     private List<Product> products;
     @OneToMany
+    @JsonIgnore
     private List<Product> featuredProducts;
 }
