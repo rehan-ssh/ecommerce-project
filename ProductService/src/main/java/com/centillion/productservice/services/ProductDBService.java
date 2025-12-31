@@ -5,6 +5,7 @@ import com.centillion.productservice.models.Category;
 import com.centillion.productservice.models.Product;
 import com.centillion.productservice.repositories.CategoryRepository;
 import com.centillion.productservice.repositories.ProductRepository;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,14 +18,24 @@ public class ProductDBService implements ProductService {
     private CategoryRepository categoryRepository;
     ProductRepository productRepository;
 
-    public ProductDBService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+    RedisTemplate<String, Object> redisTemplate;
+
+
+    public ProductDBService(ProductRepository productRepository, CategoryRepository categoryRepository, RedisTemplate<String, Object> redisTemplate) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public Product getProductById(Long id) throws ProductNotFoundException {
-        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product Not Found with id: " + id));
+        Product product = (Product)redisTemplate.opsForValue().get("products:" + id);
+        if(product != null){
+            return product;
+        }
+        product =  productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product Not Found with id: " + id));
+        redisTemplate.opsForValue().set("products:" + id, product);
+        return product;
     }
 
 

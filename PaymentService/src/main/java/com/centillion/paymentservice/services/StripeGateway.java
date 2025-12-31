@@ -27,6 +27,7 @@ public class StripeGateway implements PaymentGateway
         try {
             Stripe.apiKey = this.apiKey;
             // Generate an idempotency key (for example: UUID)
+            // this key should have order id and user id hash
             String idempotencyKey = UUID.randomUUID().toString();
 
             // Pass idempotency key in RequestOptions
