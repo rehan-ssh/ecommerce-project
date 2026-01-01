@@ -81,6 +81,7 @@ public class UserServiceImpl implements UserService {
        Token token = new Token();
        token.setUser(user);
        token.setValue(UUID.randomUUID().toString());
+       token.setDeleted(false);
 
        Calendar cal = Calendar.getInstance();
        cal.add(Calendar.DATE, 30);
@@ -91,7 +92,7 @@ public class UserServiceImpl implements UserService {
 
     public boolean logout(String token) {
         return tokenRepository
-                .findByValueAndDeletedAndExpiryAtGreaterThan(token, false, new Date())
+                .findByValueAndDeletedNotAndExpiryAtGreaterThan(token, true, new Date())
                 .map(t -> {
                     t.setDeleted(true);
                     tokenRepository.save(t);
@@ -109,9 +110,9 @@ public class UserServiceImpl implements UserService {
          * 3. Should not have expired
          * */
 
-        Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedAndExpiryAtGreaterThan(tokenValue,
-                false, new Date());
-
+        Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedNotAndExpiryAtGreaterThan(tokenValue,
+                true, new Date());
+        System.out.println( optionalToken.map(Token::getUser).orElse(null));
         return optionalToken.map(Token::getUser).orElse(null);
 
     }

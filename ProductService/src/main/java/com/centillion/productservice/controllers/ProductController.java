@@ -1,5 +1,6 @@
 package com.centillion.productservice.controllers;
 
+import com.centillion.productservice.commons.ApplicationCommons;
 import com.centillion.productservice.dtos.CreateProductRequestDTO;
 import com.centillion.productservice.dtos.ErrorDTO;
 import com.centillion.productservice.dtos.ProductResponseDTO;
@@ -18,13 +19,21 @@ import java.util.List;
 public class ProductController {
 
     ProductService productService;
+    ApplicationCommons applicationCommons;
 
-    ProductController(ProductService productService) {
+    ProductController(ProductService productService, ApplicationCommons applicationCommons) {
         this.productService = productService;
+        this.applicationCommons = applicationCommons;
     }
 
     @GetMapping("/products/{id}")
-    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Long id) throws ProductNotFoundException {
+    public ResponseEntity<ProductResponseDTO> getProductById
+            (@PathVariable Long id,
+             @RequestHeader("Authorization") String token) throws ProductNotFoundException {
+
+        applicationCommons.validateToken(token);
+
+        
         ProductResponseDTO productResponseDTO = ProductResponseDTO.from(productService.getProductById(id));
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
     }
