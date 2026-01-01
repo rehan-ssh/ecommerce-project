@@ -1,10 +1,15 @@
 package com.centillion.userservice.services;
 
+import com.centillion.userservice.dtos.SendEmailDto;
 import com.centillion.userservice.models.Token;
 import com.centillion.userservice.models.User;
 import com.centillion.userservice.repositories.TokenRepository;
 import com.centillion.userservice.repositories.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +25,22 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     BCryptPasswordEncoder bCryptPasswordEncoder;
     TokenRepository tokenRepository;
+    KafkaTemplate<String, String> kafkaTemplate;
+    ObjectMapper objectMapper;
+    String senderEmail;
 
-    UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, TokenRepository tokenRepository) {
+    UserServiceImpl(UserRepository userRepository,
+                    BCryptPasswordEncoder bCryptPasswordEncoder,
+                    TokenRepository tokenRepository,
+                    KafkaTemplate<String, String> kafkaTemplate,
+                    ObjectMapper objectMapper,
+                    @Value("${sender.email}") String senderEmail) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.tokenRepository = tokenRepository;
-
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.senderEmail = senderEmail;
     }
 
     @Override
@@ -37,6 +52,18 @@ public class UserServiceImpl implements UserService {
         user.setEmail(email);
         user.setPassword(bCryptPasswordEncoder.encode(password));
 
+        SendEmailDto sendEmailDto = new SendEmailDto();
+        sendEmailDto.setFrom(senderEmail);
+        sendEmailDto.setSubject("User Registration");
+        sendEmailDto.setBody("Hello, " + name + "!");
+        sendEmailDto.setTo(email);
+
+        try {
+            String sendEmailDtoString = objectMapper.writeValueAsString(sendEmailDto);
+            kafkaTemplate.send("sendEmail", sendEmailDtoString);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         return userRepository.save(user);
     }
