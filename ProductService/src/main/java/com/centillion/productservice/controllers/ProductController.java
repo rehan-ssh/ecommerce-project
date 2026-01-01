@@ -4,8 +4,10 @@ import com.centillion.productservice.commons.ApplicationCommons;
 import com.centillion.productservice.dtos.CreateProductRequestDTO;
 import com.centillion.productservice.dtos.ErrorDTO;
 import com.centillion.productservice.dtos.ProductResponseDTO;
+import com.centillion.productservice.dtos.ProductWithoutDescDto;
 import com.centillion.productservice.exceptions.ProductNotFoundException;
 import com.centillion.productservice.models.Product;
+import com.centillion.productservice.services.ProductAIService;
 import com.centillion.productservice.services.ProductService;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
@@ -20,10 +22,14 @@ public class ProductController {
 
     ProductService productService;
     ApplicationCommons applicationCommons;
+    ProductAIService productAIService;
 
-    ProductController(ProductService productService, ApplicationCommons applicationCommons) {
+    ProductController(ProductService productService,
+                      ApplicationCommons applicationCommons,
+                      ProductAIService productAIService) {
         this.productService = productService;
         this.applicationCommons = applicationCommons;
+        this.productAIService = productAIService;
     }
 
     @GetMapping("/products/{id}")
@@ -64,7 +70,21 @@ public class ProductController {
 
         ProductResponseDTO productResponseDto = ProductResponseDTO.from(product);
 
-        return new ResponseEntity<>(productResponseDto, HttpStatus.OK);
+        return new ResponseEntity<>(productResponseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/products/generate-description")
+    public  ResponseEntity<ProductResponseDTO> createProductWithAIDescription(
+            @RequestBody ProductWithoutDescDto productWithoutDescDto)
+    {
+        Product product = productAIService.createProductWithAIDescription(
+                productWithoutDescDto.getName(),
+                productWithoutDescDto.getPrice(),
+                productWithoutDescDto.getImageUrl(),
+                productWithoutDescDto.getCategory()
+        );
+
+        return new ResponseEntity<>(ProductResponseDTO.from(product), HttpStatus.CREATED);
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
