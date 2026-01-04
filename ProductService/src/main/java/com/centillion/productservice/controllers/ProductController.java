@@ -34,11 +34,7 @@ public class ProductController {
 
     @GetMapping("/products/{id}")
     public ResponseEntity<ProductResponseDTO> getProductById
-            (@PathVariable Long id,
-             @RequestHeader("Authorization") String token) throws ProductNotFoundException {
-
-        applicationCommons.validateToken(token);
-
+            (@PathVariable Long id) throws ProductNotFoundException {
         
         ProductResponseDTO productResponseDTO = ProductResponseDTO.from(productService.getProductById(id));
         return new ResponseEntity<>(productResponseDTO, HttpStatus.OK);
@@ -57,9 +53,12 @@ public class ProductController {
     }
 
     @PostMapping("/products/")
-    public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody
-                                                CreateProductRequestDTO createProductRequestDTO)
+    public ResponseEntity<ProductResponseDTO> createProduct(
+            @RequestBody CreateProductRequestDTO createProductRequestDTO,
+            @RequestHeader("Authorization") String token)
     {
+        // @TODO: Move this validate token call in auth filter chain, use security maven package
+        applicationCommons.validateToken(token);
         Product product = productService.createProduct(
                 createProductRequestDTO.getName(),
                 createProductRequestDTO.getDescription(),
@@ -75,8 +74,10 @@ public class ProductController {
 
     @PostMapping("/products/generate-description")
     public  ResponseEntity<ProductResponseDTO> createProductWithAIDescription(
-            @RequestBody ProductWithoutDescDto productWithoutDescDto)
+            @RequestBody ProductWithoutDescDto productWithoutDescDto,
+            @RequestHeader("Authorization") String token)
     {
+        applicationCommons.validateToken(token);
         Product product = productAIService.createProductWithAIDescription(
                 productWithoutDescDto.getName(),
                 productWithoutDescDto.getPrice(),
@@ -91,14 +92,8 @@ public class ProductController {
     public ResponseEntity<ErrorDTO> handleProductNotFoundException(
             ProductNotFoundException ex) {
 
-       ErrorDTO errorDTO = new ErrorDTO();
-       errorDTO.setMessage(ex.getMessage());
-       errorDTO.setStatus(HttpStatus.NOT_FOUND.value());
-
+       ErrorDTO errorDTO = new ErrorDTO(ex.getMessage(), HttpStatus.NOT_FOUND.value());
         return new ResponseEntity<>(errorDTO, HttpStatus.NOT_FOUND);
     }
-
-
-
 
 }

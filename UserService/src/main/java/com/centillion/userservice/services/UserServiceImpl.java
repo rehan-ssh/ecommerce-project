@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
        token.setDeleted(false);
 
        Calendar cal = Calendar.getInstance();
-       cal.add(Calendar.DATE, 30);
+       cal.add(Calendar.DATE, 7);
        Date date = cal.getTime();
        token.setExpiryAt(date);
        return tokenRepository.save(token);
