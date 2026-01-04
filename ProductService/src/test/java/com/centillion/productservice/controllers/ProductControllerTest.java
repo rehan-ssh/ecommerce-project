@@ -1,8 +1,10 @@
 package com.centillion.productservice.controllers;
 
+import com.centillion.productservice.commons.ApplicationCommons;
 import com.centillion.productservice.dtos.CreateProductRequestDTO;
 import com.centillion.productservice.models.Category;
 import com.centillion.productservice.models.Product;
+import com.centillion.productservice.services.ProductAIService;
 import com.centillion.productservice.services.ProductService;
 import com.centillion.productservice.exceptions.ProductNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +31,12 @@ class ProductControllerTest {
 
     @Mock
     private ProductService productService;
+
+    @Mock
+    private ApplicationCommons applicationCommons;
+
+    @Mock
+    private ProductAIService productAIService;
 
     @InjectMocks
     private ProductController productController;
@@ -152,11 +160,15 @@ class ProductControllerTest {
                 request.getCategory()
         )).thenReturn(savedProduct);
 
+        // Mock the token validation to do nothing (valid token)
+        doNothing().when(applicationCommons).validateToken(anyString());
+
         // When & Then
         mockMvc.perform(post("/products/")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer valid-token")
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Book"))
                 .andExpect(jsonPath("$.category").value("education"));
