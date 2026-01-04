@@ -30,6 +30,12 @@ class ProductControllerTest {
     private MockMvc mockMvc;
 
     @Mock
+    private ApplicationCommons applicationCommons;
+
+    @Mock
+    private ProductAIService productAIService;
+
+    @Mock
     private ProductService productService;
 
     @Mock
@@ -159,6 +165,8 @@ class ProductControllerTest {
                 request.getImageUrl(),
                 request.getCategory()
         )).thenReturn(savedProduct);
+        // Mock the token validation to do nothing (valid token)
+        doNothing().when(applicationCommons).validateToken(anyString());
 
         // Mock the token validation to do nothing (valid token)
         doNothing().when(applicationCommons).validateToken(anyString());
@@ -166,8 +174,13 @@ class ProductControllerTest {
         // When & Then
         mockMvc.perform(post("/products/")
                         .contentType(MediaType.APPLICATION_JSON)
+<<<<<<< Updated upstream
                         .header("Authorization", "Bearer valid-token")
                         .content(objectMapper.writeValueAsString(request)))
+=======
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer valid-token"))
+>>>>>>> Stashed changes
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Book"))

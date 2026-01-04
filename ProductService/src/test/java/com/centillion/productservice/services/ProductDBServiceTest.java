@@ -11,6 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,15 @@ class ProductDBServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
+
+    @Mock
+    private ChatClient chatClient;
 
     @InjectMocks
     private ProductDBService productDBService;
@@ -47,6 +59,9 @@ class ProductDBServiceTest {
         product.setPrice(50000);
         product.setImageUrl("img.png");
         product.setCategory(category);
+
+        // Mock Redis operations with lenient to avoid UnnecessaryStubbingException
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     // ---------- getProductById ----------
@@ -54,6 +69,7 @@ class ProductDBServiceTest {
     @Test
     void getProductById_success() throws ProductNotFoundException {
         // given
+        when(valueOperations.get("products:1")).thenReturn(null); // Cache miss
         when(productRepository.findById(1L))
                 .thenReturn(Optional.of(product));
 
@@ -63,12 +79,31 @@ class ProductDBServiceTest {
         // then
         assertNotNull(result);
         assertEquals("Phone", result.getName());
+        verify(valueOperations).get("products:1");
         verify(productRepository).findById(1L);
+        verify(valueOperations).set("products:1", product);
+    }
+
+    @Test
+    void getProductById_fromCache_success() throws ProductNotFoundException {
+        // given
+        when(valueOperations.get("products:1")).thenReturn(product); // Cache hit
+
+        // when
+        Product result = productDBService.getProductById(1L);
+
+        // then
+        assertNotNull(result);
+        assertEquals("Phone", result.getName());
+        verify(valueOperations).get("products:1");
+        verify(productRepository, never()).findById(any()); // Should not hit DB
+        verify(valueOperations, never()).set(anyString(), any()); // Should not update cache
     }
 
     @Test
     void getProductById_notFound_throwsException() {
         // given
+        when(valueOperations.get("products:1")).thenReturn(null); // Cache miss
         when(productRepository.findById(1L))
                 .thenReturn(Optional.empty());
 
@@ -79,6 +114,7 @@ class ProductDBServiceTest {
         );
 
         assertEquals("Product Not Found with id: 1", ex.getMessage());
+        verify(valueOperations).get("products:1");
         verify(productRepository).findById(1L);
     }
 
