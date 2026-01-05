@@ -23,7 +23,6 @@ A modern, scalable e-commerce platform built with microservices architecture usi
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## 🎯 Overview
 
