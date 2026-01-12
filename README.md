@@ -64,6 +64,8 @@ The platform follows a microservices architecture pattern with the following com
 └────────┘      └───-───┘                      └─────────┘
 ```
 
+![Deployment Architecture](./images/deployment-architecture.jpg)
+
 ## 🛠 Tech Stack
 
 ### Core Technologies
