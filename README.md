@@ -63,8 +63,79 @@ The platform follows a microservices architecture pattern with the following com
 │   DB   │      │   DB  │                      │ Cluster │
 └────────┘      └───-───┘                      └─────────┘
 ```
+Deployment architecture in AWS:
 
-![Deployment Architecture](./images/deployment-architecture.jpg)
+```mermaid
+---
+config:
+  layout: dagre
+---
+flowchart LR
+ subgraph PUB["Public Subnet AZ-1\n10.0.1.0/24"]
+        ALB["Application Load Balancer"]
+        NAT["NAT Gateway"]
+  end
+ subgraph APP1["Private App Subnet AZ-1\n10.0.10.0/24"]
+        E1["Eureka"]
+        API1["API Gateway Service"]
+        USR1["User Service"]
+        PROD1["Product Service"]
+        PAY1["Payment Service"]
+        MAIL1["Email Service"]
+  end
+ subgraph APP2["Private App Subnet AZ-2\n10.0.20.0/24"]
+        E2["Eureka"]
+        API2["API Gateway Service"]
+        USR2["User Service"]
+        PROD2["Product Service"]
+        PAY2["Payment Service"]
+        MAIL2["Email Service"]
+  end
+ subgraph DATA1["Private Data Subnet AZ-1\n10.0.100.0/24"]
+        RDS1[("RDS MySQL Primary")]
+        REDIS1[("Redis Primary")]
+  end
+ subgraph DATA2["Private Data Subnet AZ-2\n10.0.200.0/24"]
+        RDS2[("RDS MySQL Standby")]
+        REDIS2[("Redis Replica")]
+  end
+ subgraph STREAM1["Streaming Subnet AZ-1"]
+        KAFKA1[("Kafka Broker 1")]
+  end
+ subgraph STREAM2["Streaming Subnet AZ-2"]
+        KAFKA2[("Kafka Broker 2")]
+  end
+ subgraph VPC["AWS VPC 10.0.0.0/16"]
+        PUB
+        APP1
+        APP2
+        DATA1
+        DATA2
+        STREAM1
+        STREAM2
+  end
+    USER["Users / Browsers"] -.-> DNS["DNS Resolver (ISP / Google / Cloudflare)"]
+    DNS -.-> R53["Route 53"] & USER
+    R53 -.-> DNS
+    USER --> ALB
+    ALB --> API1 & API2
+    API1 --> USR1 & PROD1 & PAY1 & MAIL1
+    USR1 --> RDS1 & REDIS1
+    PROD1 --> RDS1
+    PAY1 --> RDS1
+    MAIL1 --> KAFKA1
+    API2 --> USR2 & PROD2 & PAY2 & MAIL2
+    USR2 --> RDS1 & REDIS1
+    PROD2 --> RDS1
+    PAY2 --> RDS1
+    MAIL2 --> KAFKA2
+    RDS1 -- Sync Replication --> RDS2
+    REDIS1 -- Async Replication --> REDIS2
+    KAFKA1 <-- Replication --> KAFKA2
+    APP1 --> NAT
+    APP2 --> NAT
+    NAT --> EXT["External APIs (Stripe, OpenAI)"]
+```
 
 ## 🛠 Tech Stack
 
